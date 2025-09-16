@@ -1,7 +1,4 @@
 # Cosmic Insights — Kundali Life Dashboard
-
-[Live Demo]([https://your-live-demo-link.com](https://github.com/sagorikaProduct/Cosmic-Insights-Kundali-Life-Dashboard.git))  
-
 **Cosmic Insights** is a modern web application that provides detailed astrology and Kundali reports. It helps users understand their birth chart, planetary positions, and life predictions in a simple and interactive way. The dashboard is designed with an enhanced UI for an engaging user experience.
 
 ---
@@ -33,15 +30,8 @@
 - **Libraries/Tools**: Astrology calculation libraries or APIs used for Kundali generation
 - **Version Control**: Git & GitHub
 
----
+[Live Demo] 
+(https://github.com/sagorikaProduct/Cosmic-Insights-Kundali-Life-Dashboard.git)  
 
-## 🤝 Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature:  
-   ```bash
-   git checkout -b feature-name
-﻿# Cosmic Insights — Kundali Life Dashboard
 
