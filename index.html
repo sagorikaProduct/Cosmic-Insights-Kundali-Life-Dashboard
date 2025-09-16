@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cosmic Insights — Detailed Kundali Report</title>
+  <style>
+    /* --- Basic layout & theme (matches screenshot style; responsive) --- */
+    :root{
+      --bg-top:#22113a; --bg-bottom:#081024;
+      --panel:#0f1530; --muted:#bdb6d3; --accent1:#ff7eb3; --accent2:#ffd07a;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Poppins", Inter, system-ui, Arial;
+      background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
+      color:#fff;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      min-height:100vh;
+      padding: 28px 12px;
+      display:flex;
+      justify-content:center;
+    }
+    .wrap{
+      width:100%;
+      max-width:1100px;
+    }
+
+    header{
+      text-align:center; margin-bottom:18px;
+      background: linear-gradient(90deg,var(--accent1),var(--accent2));
+      padding:18px;border-radius:12px;color:#111;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+    header h1{margin:0;font-size:26px}
+    header p{margin:6px 0 0;color:#222;font-size:13px}
+
+    /* Page containers */
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px; padding:20px; margin-bottom:18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border:1px solid rgba(255,255,255,0.02);
+    }
+
+    /* Form */
+    form{max-width:480px;margin:10px auto;display:grid;gap:10px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type="date"], input[type="time"], input[type="text"], select{
+      width:100%; padding:12px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:15px;
+    }
+    .row{display:flex;gap:10px}
+    .row .flex{flex:1}
+
+    button.primary{
+      display:inline-block;padding:12px 16px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#111;font-weight:700;cursor:pointer;font-size:15px;margin-top:6px;
+    }
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px 12px;border-radius:10px;cursor:pointer}
+
+    /* Report layout */
+    .report{
+      display:none;
+      color:#efe8ff;
+    }
+    .overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px}
+    .info-box{background:rgba(255,255,255,0.02);padding:12px;border-radius:10px;border-left:4px solid rgba(255,255,255,0.03)}
+    .info-box h4{margin:0 0 6px;font-size:14px;color:#fff}
+    .info-box p{margin:0;color:var(--muted);font-size:13px}
+
+    .section{margin-top:16px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); padding:14px;border-radius:10px}
+    .section h3{margin:0 0 6px;color: #ffeab0}
+    .section p{color:#e7e0ff;margin:0 0 10px;line-height:1.6}
+    .bullet{margin-left:18px;color:var(--muted);list-style:disc}
+    .note{font-size:13px;color:#cfc7de;margin-top:10px}
+    .remedies{background:rgba(0,0,0,0.12);padding:12px;border-radius:8px;margin-top:8px}
+
+    .small{font-size:13px;color:var(--muted)}
+    .back-row{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:12px}
+    .bigBadge{background:linear-gradient(90deg,#fff2,#ffeef2);color:#111;padding:6px 10px;border-radius:999px;font-weight:700}
+
+    @media (max-width:720px){
+      header h1{font-size:20px}
+      form{padding:6px}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Cosmic Insights — Kundali & Life Dashboard</h1>
+      <p>Enter your birth details — get a full kundali-style reading with Mahadasha, Antardasha, practical remedies and timelines.</p>
+    </header>
+
+    <!-- PAGE 1: INPUT -->
+    <div id="page-input" class="card">
+      <h2 style="margin-top:0">Enter Birth Details</h2>
+      <form id="birthForm">
+        <div>
+          <label for="dob">Date of Birth</label>
+          <input id="dob" type="date" required />
+        </div>
+
+        <div class="row">
+          <div class="flex">
+            <label for="tob">Time of Birth (local)</label>
+            <input id="tob" type="time" required />
+          </div>
+          <div style="width:120px">
+            <label for="tz">Timezone (optional)</label>
+            <select id="tz">
+              <option value="">Auto (from place)</option>
+              <option value="5.5">Asia/Kolkata (+5:30)</option>
+              <option value="0">UTC</option>
+              <option value="-5">America/New_York (-5)</option>
+              <option value="-8">America/Los_Angeles (-8)</option>
+              <option value="1">Europe/Paris (+1)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label for="pob">Place of Birth — city or "lat,lon" (e.g. Delhi or 28.6139,77.2090)</label>
+          <input id="pob" type="text" placeholder="Delhi or 28.6139,77.2090" required />
+          <div class="small">Tip: use lat,lon for most accurate Ascendant/Lagna.</div>
+        </div>
+
+        <div style="margin-top:10px;display:flex;gap:10px;align-items:center">
+          <button class="primary" type="submit">Generate Kundali & Life Report</button>
+          <button type="button" id="demoBtn" class="ghost">Use demo (29 Nov 1998, 21:31, Delhi)</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- PAGE 2: REPORT -->
+    <div id="page-report" class="card report">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <h2 style="margin:0">Your Kundali Quick Overview</h2>
+          <div class="small">A concise snapshot of the key config of your natal chart (generated offline).</div>
+        </div>
+
+        <div style="text-align:right">
+          <div class="bigBadge" id="reportDate">Report</div>
+        </div>
+      </div>
+
+      <!-- Overview boxes -->
+      <div class="overview-grid" id="overviewBoxes" style="margin-top:12px"></div>
+
+      <!-- Career -->
+      <div class="section" id="careerSection">
+        <h3>📌 Career Astrological Insights</h3>
+        <div id="careerContent"></div>
+      </div>
+
+      <!-- Education -->
+      <div class="section" id="educationSection">
+        <h3>📚 Education & Learning</h3>
+        <div id="educationContent"></div>
+      </div>
+
+      <!-- Marriage -->
+      <div class="section" id="marriageSection">
+        <h3>💞 Marriage & Relationships</h3>
+        <div id="marriageContent"></div>
+      </div>
+
+      <!-- Parents -->
+      <div class="section" id="parentsSection">
+        <h3>👪 Parents & Family</h3>
+        <div id="parentsContent"></div>
+      </div>
+
+      <!-- Health -->
+      <div class="section" id="healthSection">
+        <h3>🩺 Health & Vitality</h3>
+        <div id="healthContent"></div>
+      </div>
+
+      <!-- Overall -->
+      <div class="section" id="overallSection">
+        <h3>🔮 Overall Life Combination</h3>
+        <div id="overallContent"></div>
+      </div>
+
+      <div class="back-row">
+        <div class="small">Tip: The reading is deterministic and approximate — meant for insights & action, not medical/legal advice.</div>
+        <div>
+          <button id="backBtn" class="ghost">← Edit details</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /*************************************************************************
+   * Astronomy + Kundali generator (client-side, deterministic, approximate)
+   * - Sun sign by date
+   * - Moon ecliptic longitude approximation -> Moon sign & Nakshatra/pada
+   * - Ascendant (Lagna) approximation from local sidereal time + lat/lon
+   * - Vimshottari Mahadasha timeline computed (approx) and Antardasha
+   * - Narrative generator builds long, practical, kundali-style sections
+   *
+   * No external APIs. All done in-browser.
+   *************************************************************************/
+
+  /* ---------- small city map for coordinates + default timezone ---------- */
+  const cityMap = {
+    "delhi": {lat:28.6139, lon:77.2090, tz:5.5},
+    "mumbai": {lat:19.0760, lon:72.8777, tz:5.5},
+    "kolkata": {lat:22.5726, lon:88.3639, tz:5.5},
+    "chennai": {lat:13.0827, lon:80.2707, tz:5.5},
+    "bangalore": {lat:12.9716, lon:77.5946, tz:5.5},
+    "new york": {lat:40.7128, lon:-74.0060, tz:-5},
+    "los angeles": {lat:34.0522, lon:-118.2437, tz:-8},
+    "london": {lat:51.5074, lon:-0.1278, tz:0},
+    "paris": {lat:48.8566, lon:2.3522, tz:1},
+    "tokyo": {lat:35.6895, lon:139.6917, tz:9},
+    "sydney": {lat:-33.8688, lon:151.2093, tz:10},
+    "dubai": {lat:25.2048, lon:55.2708, tz:4},
+    "singapore": {lat:1.3521, lon:103.8198, tz:8}
+  };
+
+  /* ---------- helper math ---------- */
+  const toRad = d => d * Math.PI / 180;
+  const toDeg = r => r * 180 / Math.PI;
+  const norm360 = a => ((a % 360) + 360) % 360;
+
+  /* ---------- Zodiac & Nakshatra arrays ---------- */
+  const zodiac = ["Aries","Taurus","Gemini","Cancer","Leo","Virgo","Libra","Scorpio","Sagittarius","Capricorn","Aquarius","Pisces"];
+  const nakshatras = ["Ashwini","Bharani","Krittika","Rohini","Mrigashira","Ardra","Punarvasu","Pushya","Ashlesha","Magha","PurvaPhalguni","UttaraPhalguni","Hasta","Chitra","Swati","Vishakha","Anuradha","Jyeshtha","Mula","PurvaAshadha","UttaraAshadha","Shravana","Dhanishta","Shatabhisha","PurvaBhadrapada","UttaraBhadrapada","Revati"];
+  // Vimshottari sequence lords mapped across 27 nakshatras (Ashwini -> Ketu, Bharani -> Venus, ...)
+  const nak_lords = [
+    "Ketu","Venus","Sun","Moon","Mars","Rahu","Jupiter","Saturn","Mercury",
+    "Ketu","Venus","Sun","Moon","Mars","Rahu","Jupiter","Saturn","Mercury",
+    "Ketu","Venus","Sun","Moon","Mars","Rahu","Jupiter","Saturn","Mercury"
+  ];
+  // Dasha durations (years) in Vimshottari
+  const dashaDur = {Ketu:7,Venus:20,Sun:6,Moon:10,Mars:7,Rahu:18,Jupiter:16,Saturn:19,Mercury:17};
+  const dashaOrder = ["Ketu","Venus","Sun","Moon","Mars","Rahu","Jupiter","Saturn","Mercury"];
+
+  /* ---------- Astronomical approximations ---------- */
+  // Julian date (UTC)
+  function toJulianDate(year, month, day, hourDecimal){
+    // month 1..12, day 1..31, hourDecimal e.g., 21.5167
+    let Y = year, M = month;
+    if (M <= 2) { Y -= 1; M += 12; }
+    let A = Math.floor(Y/100);
+    let B = 2 - A + Math.floor(A/4);
+    const JD = Math.floor(365.25*(Y+4716)) + Math.floor(30.6001*(M+1)) + day + B - 1524.5 + (hourDecimal/24.0);
+    return JD;
+  }
+
+  // Approximate Moon ecliptic longitude (good for sign & nakshatra)
+  function moonEclipticLongitude(JD){
+    const D = JD - 2451545.0;
+    let Lm = 218.316 + 13.176396 * D;
+    let Mm = 134.963 + 13.064993 * D;
+    let Ms = 357.529 + 0.98560028 * D;
+    let Darg = 297.850 + 12.190749 * D;
+    let F = 93.272 + 13.229350 * D;
+
+    Lm = norm360(Lm); Mm = norm360(Mm); Ms = norm360(Ms); Darg = norm360(Darg); F = norm360(F);
+
+    const Mm_r = toRad(Mm), Ms_r = toRad(Ms), D_r = toRad(Darg), F_r = toRad(F);
+    const term1 = 6.289 * Math.sin(Mm_r);
+    const term2 = 1.274 * Math.sin(2*D_r - Mm_r);
+    const term3 = 0.658 * Math.sin(2*D_r);
+    const term4 = 0.214 * Math.sin(2*Mm_r);
+    const term5 = -0.186 * Math.sin(toRad(Ms));
+    const term6 = -0.059 * Math.sin(2*F_r);
+    const term7 = -0.057 * Math.sin(Mm_r + toRad(Ms));
+    const term8 = 0.053 * Math.sin(2*D_r + Mm_r);
+    let lambda = Lm + term1 + term2 + term3 + term4 + term5 + term6 + term7 + term8;
+    lambda = norm360(lambda);
+    return lambda;
+  }
+
+  // Approximate Saturn longitude (for a simple transit check)
+  // Uses mean longitude at J2000 ~ 50.077471 and average daily motion
+  function saturnLongitude(JD){
+    const L0 = 50.077471; // approximate mean long at J2000
+    const yearsPerOrbit = 29.4571; // Saturn orbit years (approx)
+    const daysPerOrbit = yearsPerOrbit * 365.25;
+    const degPerDay = 360.0 / daysPerOrbit;
+    const D = JD - 2451545.0;
+    return norm360(L0 + degPerDay * D);
+  }
+
+  // Ascendant (ecliptic longitude) using local sidereal time approximation
+  function calcAscendant(JD, latDeg, lonDeg){
+    const T = (JD - 2451545.0) / 36525.0;
+    let GMST = 280.46061837 + 360.98564736629 * (JD - 2451545.0) + 0.000387933 * T*T - (T*T*T)/38710000;
+    GMST = norm360(GMST);
+    let LST = norm360(GMST + lonDeg);
+    const eps = 23.439291 - 0.0130042 * T;
+    const lstRad = toRad(LST), latRad = toRad(latDeg), epsRad = toRad(eps);
+    const x = Math.cos(lstRad);
+    const y = Math.sin(lstRad) * Math.cos(epsRad) - Math.tan(latRad) * Math.sin(epsRad);
+    let asc = toDeg(Math.atan2(y, x));
+    asc = norm360(asc);
+    return asc;
+  }
+
+  /* ---------- Utilities: parse place input (city or lat,lon) ---------- */
+  function parsePlace(input){
+    if(!input) return null;
+    const v = input.trim().toLowerCase();
+    // lat,lon pattern
+    const latlonMatch = v.match(/^(-?\d+(\.\d+)?)[,\s]+(-?\d+(\.\d+)?)$/);
+    if (latlonMatch){
+      const lat = parseFloat(latlonMatch[1]);
+      const lon = parseFloat(latlonMatch[3]);
+      const tz = Math.round((lon/15)*2)/2; // crude tz estimate to nearest 0.5h
+      return {lat, lon, tz, foundCity:false};
+    }
+    // try city map
+    const short = v.replace(/\s+/g,' ').trim();
+    if (cityMap[short]) {
+      const c = cityMap[short];
+      return {lat:c.lat, lon:c.lon, tz:c.tz, foundCity:true, city:short};
+    }
+    // substring search (e.g., "delhi, india")
+    for (let key in cityMap){
+      if (v.indexOf(key) !== -1){
+        const c = cityMap[key];
+        return {lat:c.lat, lon:c.lon, tz:c.tz, foundCity:true, city:key};
+      }
+    }
+    return null;
+  }
+
+  /* ---------- Mahadasha timeline (Vimshottari-style approximate) ---------- */
+  // Build mahadasha timeline starting at birth:
+  // - starting ruler depends on nakshatra
+  // - remaining portion of starting dasha = fullYearsOfLord * (1 - fractionWithinNak)
+  // - subsequent dashas follow in dashaOrder with full durations
+  function buildMahadashaTimeline(birthDateObj, nakIndex, fracWithin){
+    const timeline = [];
+    const birthTime = new Date(birthDateObj.getTime()); // JS Date
+    const startLord = nak_lords[nakIndex];
+    // find index of startLord in order
+    let si = dashaOrder.indexOf(startLord);
+    // remaining years for first dasha
+    const firstTotal = dashaDur[startLord];
+    const firstRemainingYears = firstTotal * (1 - fracWithin);
+
+    // function to add years (approx using 365.25 days)
+    function addYears(date, years){
+      const days = Math.round(years * 365.25);
+      return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+    }
+
+    let curStart = birthTime;
+    let curEnd = addYears(curStart, firstRemainingYears);
+    timeline.push({lord:startLord, start:curStart, end:curEnd, durationYears:firstRemainingYears});
+    let idx = (si + 1) % dashaOrder.length;
+    // add dashas until ~120 years from birth
+    while ((timeline[timeline.length - 1].end - birthTime) / (1000*3600*24*365.25) < 120){
+      const lord = dashaOrder[idx];
+      const dur = dashaDur[lord];
+      curStart = new Date(timeline[timeline.length - 1].end.getTime());
+      curEnd = addYears(curStart, dur);
+      timeline.push({lord, start:curStart, end:curEnd, durationYears:dur});
+      idx = (idx + 1) % dashaOrder.length;
+    }
+    return timeline;
+  }
+
+  // Given a mahadasha entry and the timeline, compute antardasha (subperiod) sequence and find the running antardasha for a specific date
+  function findCurrentMahadashaAndAntardasha(timeline, now){
+    let currentMah = null;
+    for (const entry of timeline){
+      if (now >= entry.start && now < entry.end){
+        currentMah = entry;
+        break;
+      }
+    }
+    if (!currentMah){
+      // Maybe now is before end of timeline; fallback to last
+      currentMah = timeline[timeline.length - 1];
+    }
+    // antardasha durations within the mahadasha: scaled by (planetDur / 120) * mahDurationYears
+    const mahYears = (currentMah.end - currentMah.start) / (1000*3600*24*365.25);
+    const antarDurations = [];
+    for (const p of dashaOrder){
+      const durYears = mahYears * (dashaDur[p] / 120.0);
+      antarDurations.push({lord:p, durYears});
+    }
+    // find elapsed years
+    const elapsedYears = (now - currentMah.start) / (1000*3600*24*365.25);
+    let acc = 0;
+    let runningAntar = null;
+    for (const a of antarDurations){
+      if (elapsedYears >= acc && elapsedYears < acc + a.durYears){
+        runningAntar = {lord:a.lord, startYears:acc, endYears:acc + a.durYears};
+        break;
+      }
+      acc += a.durYears;
+    }
+    return {mah:currentMah, antar:runningAntar, mahYears, antarDurations};
+  }
+
+  /* ---------- Narrative generator helpers (templates & sign-words) ---------- */
+  // signKeywords gives anchor words to use inside narratives (short)
+  const signKeywords = {
+    Aries: {learn:"hands-on, fast, bold", career:"leadership, entrepreneurship, sports, defense", love:"passion and fire"},
+    Taurus: {learn:"steady, practical", career:"finance, art, real-estate, luxury", love:"loyalty and comfort"},
+    Gemini: {learn:"communication, quick wit", career:"media, IT, writing, teaching", love:"intellectual connection"},
+    Cancer: {learn:"emotional, deep", career:"caregiving, hospitality, real-estate", love:"nurture and security"},
+    Leo: {learn:"display and leadership", career:"entertainment, management, creative", love:"admiration and warmth"},
+    Virgo: {learn:"detail, analysis", career:"healthcare, research, tech", love:"service and care"},
+    Libra: {learn:"arts, balance", career:"law, design, diplomacy", love:"partnership and harmony"},
+    Scorpio: {learn:"research, depth", career:"investigation, finance, healing", love:"intensity and loyalty"},
+    Sagittarius: {learn:"philosophy, travel", career:"education, travel, law", love:"freedom and growth"},
+    Capricorn: {learn:"discipline, endurance", career:"management, engineering, administration", love:"commitment and steadiness"},
+    Aquarius: {learn:"innovation, tech", career:"technology, activism, research", love:"friendship and ideals"},
+    Pisces: {learn:"creative, intuitive", career:"arts, healing, spirituality", love:"compassion and depth"}
+  };
+
+  // Remedies for planets (short)
+  const planetRemedies = {
+    Mercury: {
+      mantra: "Om Budhaya Namah",
+      color: "light green",
+      donate: "green gram or items for students",
+      practical: "improve communication: mock interviews, CV polish, public speaking"
+    },
+    Venus: {
+      mantra: "Om Shum Shukraya Namah",
+      color: "white / light blue",
+      donate: "milk or sweets on Fridays",
+      practical: "focus on design, portfolio, networking, and presentation"
+    },
+    Saturn: {
+      mantra: "Om Sham Shanicharaye Namah",
+      color: "black or dark blue",
+      donate: "black sesame, mustard oil, and clothes on Saturdays",
+      practical: "discipline, routine, patience, and consistent work"
+    },
+    Jupiter: {
+      mantra: "Om Gurave Namah",
+      color: "yellow / saffron",
+      donate: "yellow lentils, turmeric on Thursdays",
+      practical: "mentorship, study, and expanding knowledge"
+    },
+    Rahu: {
+      mantra: "Om Raam Rahave Namah",
+      color: "smoky / grey",
+      donate: "items for the disadvantaged",
+      practical: "caution with shortcuts; long-term strategy helps"
+    },
+    Ketu: {
+      mantra: "Om Ketave Namah",
+      color: "brown / maroon",
+      donate: "helping animals / dogs",
+      practical: "inner work, meditation, spiritual practices"
+    },
+    Sun: {
+      mantra: "Om Suryaya Namah",
+      color: "red",
+      donate: "wheat or jaggery on Sundays",
+      practical: "leadership training, confidence-building"
+    },
+    Moon: {
+      mantra: "Om Chandraya Namah",
+      color: "white / silver",
+      donate: "milk/white food on Monday",
+      practical: "rest, emotional regulation, creative outlets"
+    }
+  };
+
+  /* ---------- Report builder: composes long-form sections ---------- */
+  function composeReport(data){
+    // data contains: dobStr, tobStr, placeStr, sunSign, moonSign, ascSign, nakshatra, nak_index, nak_pada, careerHouseSign, mah, antar, satTransit, nowDate
+    // Use long templates (very detailed) for each section, weaving computed values.
+    const {
+      dobStr, tobStr, placeStr, sunSign, moonSign, ascSign,
+      nakshatra, nak_index, nak_pada, careerHouseSign,
+      mah, antar, mahYears, nowDate, satTransit
+    } = data;
+
+    // Utility to format date
+    function fmtDate(d){
+      return d.toLocaleDateString() + (d.toLocaleTimeString ? ", " + d.toLocaleTimeString() : "");
+    }
+
+    // 1) Quick Overview (6 bullets)
+    const overviewHTML = `
+      <div class="info-box"><h4>Lagna (Ascendant)</h4><p>${ascSign} — your outward persona, how the world sees you.</p></div>
+      <div class="info-box"><h4>Moon Sign (Rashi)</h4><p>${moonSign} — your inner emotional map; the mind & feelings.</p></div>
+      <div class="info-box"><h4>Nakshatra</h4><p>${nakshatra} (pada ${nak_pada}) — the moon's star; gives soul-pattern & karmic tone.</p></div>
+      <div class="info-box"><h4>Career House (10th)</h4><p>${careerHouseSign} — the sign that colours your public life, career choices & reputation.</p></div>
+      <div class="info-box"><h4>Current Major Period (Mahadasha)</h4><p>${mah.lord} — running until <b>${mah.end.toLocaleDateString()}</b> (~${Math.round((mah.end - nowDate)/(1000*3600*24))} days from now).</p></div>
+      <div class="info-box"><h4>Current Sub-Period (Antardasha)</h4><p>${antar.lord} — this subphase affects daily events and opportunities inside the current Mahadasha.</p></div>
+    `;
+
+    // 2) Career section: long, structured
+    // Planet influence snippets
+    const mahPlanet = mah.lord;
+    const antarPlanet = antar.lord;
+    function planetMeaning(p){
+      // general meanings for narrative
+      const map = {
+        Venus: "creativity, art, design, luxury, relationships and networking",
+        Mercury: "communication, IT, analysis, interviews, writing and trade",
+        Moon: "emotions, public perception, needs, nurturing roles and media",
+        Sun: "leadership, authority, management, government and recognition",
+        Mars: "drive, courage, competition, engineering, startups and operations",
+        Jupiter: "growth, teaching, law, higher knowledge and expansion",
+        Saturn: "discipline, delays, structure, long-term work and responsibility",
+        Rahu: "sudden changes, unconventional moves, digital, foreign or disruptive roles",
+        Ketu: "spiritual shifts, letting go, research, and detachment"
+      };
+      return map[p] || "";
+    }
+
+    // Determine "is difficult period" heuristic: if mahPlanet or antarPlanet in [Saturn,Rahu,Ketu] => highlight struggle
+    const isStruggle = ["Saturn","Rahu","Ketu"].includes(mahPlanet) || ["Saturn","Rahu","Ketu"].includes(antarPlanet);
+
+    // Saturn transit commentary if detected
+    let satTransitMsg = "";
+    if (satTransit){
+      satTransitMsg = `<p><b>Transit note:</b> Currently Saturn (Shani) is transiting your <b>${satTransit.houseFromMoon}th house from Moon</b> and <b>${satTransit.houseFromAsc}th from Lagna</b>. This transit tends to test resilience and requires sustained, mature effort. Expect delays in rewards but long-term strengthening of structures.</p>`;
+    }
+
+    const careerHTML = `
+      <div>
+        <p><b>1. ${mahPlanet} Mahadasha</b><br>
+        ${mahPlanet} governs ${planetMeaning(mahPlanet)}. As the major planet now, it shapes the overall flavour of your work life — its gifts and its tests. Based on your chart this period highlights <b>${planetMeaning(mahPlanet)}</b>, and opportunities will often come through those channels. Results may be paced — steady effort compounds into recognition.</p>
+
+        <p><b>2. ${antarPlanet} Antardasha (running now)</b><br>
+        ${antarPlanet} specifically colours the current months: it influences day-to-day outcomes, interviews and short-term openings. ${antarPlanet} emphasises ${planetMeaning(antarPlanet)} — so expect recent activity around these areas (calls, short contracts, interviews, creative tasks). Because of the combination of ${mahPlanet} + ${antarPlanet}, you may see <b>lots of activity but mixed outcomes</b> — calls and chances, but some near-misses.</p>
+
+        ${satTransitMsg}
+
+        <p><b>3. What is likely (timeline)</b><br>
+        ${isStruggle ? "A testing window is active now — delays and rejections can be common. Use this time to build skill and reputation; the cosmos wants you to prepare for bigger rewards." : "This phase is supportive — consistent effort will bring visible rewards in coming months."}</p>
+
+        <ul class="bullet">
+          <li><b>Short-term (next 6–12 months):</b> Focus on improving interview performance, portfolio, and networking. Use small wins to build momentum.</li>
+          <li><b>Mid-term (1–3 years):</b> A major shift or clearer path often arrives when current Mahadasha transitions into a benefic lord (look for Jupiter or Venus). Be positioned now — learn, upskill, and maintain visibility.</li>
+          <li><b>Long-term (3–10 years):</b> Expect stabilization and possible leadership roles if you’re disciplined and strategic now.</li>
+        </ul>
+
+        <div class="remedies">
+          <b>✅ Practical Remedies & Actions</b>
+          <ul class="bullet">
+            ${(() => {
+              // Recommend remedies prioritized for planets in charge
+              const remedies = [];
+              const usePlanets = new Set([mahPlanet, antarPlanet]);
+              if (usePlanets.has("Mercury")) {
+                remedies.push(`<li><b>For Mercury</b>: Chant <i>“Om Budhaya Namah”</i> (108 times), wear ${planetRemedies["Mercury"].color}, practice mock interviews and clear communication exercises.</li>`);
+              }
+              if (usePlanets.has("Venus")) {
+                remedies.push(`<li><b>For Venus</b>: Chant <i>“Om Shum Shukraya Namah”</i>, keep a neat portfolio, refine design/visual samples and network with tasteful presentation.</li>`);
+              }
+              if (usePlanets.has("Saturn") || isStruggle) {
+                // generic saturn remedies
+                remedies.push(`<li><b>For Saturn/delays</b>: On Saturdays, feed the needy, donate mustard oil or black sesame; keep discipline in daily routine, and focus on slow steady growth.</li>`);
+              }
+              remedies.push(`<li><b>General career tips</b>: Keep CV crisp, collect references, practise system design and problem solving (if tech), or build a case-study portfolio (if creative). Apply selectively and follow up — persistence matters.</li>`);
+              return remedies.join("");
+            })()}
+          </ul>
+        </div>
+      </div>
+    `;
+
+    // 3) Education: long narrative with early/mid/late timeline & remedies
+    function educationText(){
+      const sk = signKeywords[sunSign].learn || "steady learning";
+      return `
+        <p>Your learning style (as a <b>${sunSign}</b>) leans toward <b>${sk}</b>. In childhood you likely absorbed lessons through ${sk.split(",")[0]}. Exams and structured study may have felt either too rigid or too slow, depending on your temperament.</p>
+
+        <p><b>Early years:</b> You may have had bursts of interest followed by lull periods. If you found discipline challenging, that was simply the pattern of the chart — focus on projects that hold your curiosity.</p>
+
+        <p><b>Higher studies & specialization:</b> The chart suggests stronger momentum in tertiary education or specialized training in your mid-20s. If you are considering study abroad, research or higher degrees, the next 2–4 years contain openings — time your applications with care.</p>
+
+        <p><b>Advice & remedies:</b> Keep a daily study routine; short sprints with clear goals help. Chant Saraswati mantra for concentration, and if Mercury is active in your mahadasha/antardasha, prioritize communication skills and certifications.</p>
+      `;
+    }
+
+    // 4) Marriage & relationships: timeline + realistic guidance
+    function marriageText(){
+      const love = signKeywords[sunSign].love || "warmth and stability";
+      return `
+        <p>Relationships for you carry the tone of <b>${love}</b>. You form attachments deeply and sometimes take time to commit fully. The chart shows that your most stable partnership phase often arrives in the late 20s to early 30s.</p>
+
+        <p><b>Short-term:</b> The current period may bring meeting people who broaden your horizons — yet, some encounters could be fleeting. Evaluate compatibility on shared values, not just initial chemistry.</p>
+
+        <p><b>When stability arrives:</b> A time of steady relationship growth is indicated when a benefic planet (Jupiter or Venus) supports the 7th/5th houses in your transit cycle — the timeline for you suggests clearer partnership energy after the current Mahadasha transition into a growth planet.</p>
+
+        <p><b>Remedies:</b> Practice honest communication, share long-term goals early, and maintain shared rituals (small weekly acts). Chant relationship-focused mantras (e.g., for Venus) if relationship delays are exasperating you.</p>
+      `;
+    }
+
+    // 5) Parents & family
+    function parentsText(){
+      return `
+        <p>Your family dynamics are layered: strong emotional ties with one parent and practical guidance from the other. The chart shows karmic lessons — responsibility and duty will deepen as you age.</p>
+
+        <p><b>Short-term:</b> Patience and small reconciliations will heal misunderstandings; avoid reactive words during stressful transits. Family support becomes more apparent in your 30s.</p>
+
+        <p><b>Practical:</b> Keep clear conversations about finances and responsibilities; ritual actions (feeding, donations) often ease tension in the near term and create goodwill.</p>
+      `;
+    }
+
+    // 6) Health: vulnerabilities, timeline & remedies
+    function healthText(){
+      // choose a likely vulnerable area depending on sign
+      const signHealthMap = {
+        Aries:"head/eyes; stress and high energy",
+        Taurus:"throat/digestion; mind-body comfort",
+        Gemini:"lungs/nerves; anxiety and restlessness",
+        Cancer:"stomach/digestion; emotional stress",
+        Leo:"heart/back; overwork stress",
+        Virgo:"digestive system; nervous tension",
+        Libra:"kidneys/balance; overeating",
+        Scorpio:"reproductive system; emotional depth",
+        Sagittarius:"hips/liver; over-exertion",
+        Capricorn:"bones/joints; chronic strain",
+        Aquarius:"circulation/nervous system; fatigue",
+        Pisces:"feet/immune system; emotional dampness"
+      };
+      const vuln = signHealthMap[sunSign] || "general vitality";
+      return `
+        <p>Your health profile points to: <b>${vuln}</b>. Life's stress patterns (work, relationships) influence these areas most strongly.</p>
+
+        <p><b>Immediate:</b> Prioritize sleep, balanced meals and gentle daily movement (yoga/walking). Mindfulness practices will reduce spikes of anxiety that translate into physical symptoms.</p>
+
+        <p><b>Longer-term:</b> Regular check-ups and a predictable routine are priceless. If the current period includes Saturn or strong Moon influence, watch for periods of low energy and prioritize rest.</p>
+      `;
+    }
+
+    // 7) Overall life combination (synthesis & motivational guidance)
+    function overallText(){
+      // find next positive dasha (first upcoming Jupiter or Venus within timeline)
+      const nextPositive = (() => {
+        // look at mah timeline from current mah and find next planet among [Jupiter,Venus,Sun,Moon] considered generally helpful
+        const prefer = ["Jupiter","Venus","Sun","Moon"];
+        // find index of current mah in timeline data (we have mah variable)
+        // NOTE: the timeline is available in data.timeline
+        const tl = data.timeline; // we'll attach timeline to data before calling composeReport (done below)
+        let foundIndex = tl.findIndex(e => e.start.getTime() === mah.start.getTime() && e.lord === mah.lord);
+        for (let i = foundIndex + 1; i < tl.length; i++){
+          if (prefer.includes(tl[i].lord)) return {lord:tl[i].lord, start:tl[i].start};
+        }
+        return null;
+      })();
+
+      const nextPosText = nextPositive ? `Expect a more fortunate wave when <b>${nextPositive.lord}</b> begins around <b>${nextPositive.start.toLocaleDateString()}</b>.` : "A favourable turning point is anticipated in the coming years—stay steady.";
+
+      return `
+        <p>When we stitch everything together: your chart shows powerful learning potential, a karmic pattern of maturing through experience, and long-term rewards if you sustain disciplined effort now.</p>
+
+        <p><b>Key life strategy:</b> Convert testing periods into learning periods. Build skills in your chosen field, maintain networks, and invest in your emotional resilience. <b>${nextPosText}</b></p>
+
+        <p>Remember: Astrology maps tendencies and timings — the real agent of change is your consistent action. Use the cosmic hints to plan, prepare and act with patience.</p>
+      `;
+    }
+
+    // Build overview boxes HTML (six boxes)
+    const overviewBoxesHTML = overviewHTML;
+
+    // Insert into page by returning an object
+    return {
+      overviewBoxesHTML,
+      careerHTML,
+      educationHTML: educationText(),
+      marriageHTML: marriageText(),
+      parentsHTML: parentsText(),
+      healthHTML: healthText(),
+      overallHTML: overallText()
+    };
+  }
+
+  /* ---------- Main flow: compute everything and render ---------- */
+  const birthForm = document.getElementById("birthForm");
+  const demoBtn = document.getElementById("demoBtn");
+  const pageInput = document.getElementById("page-input");
+  const pageReport = document.getElementById("page-report");
+  const overviewBoxes = document.getElementById("overviewBoxes");
+  const careerContent = document.getElementById("careerContent");
+  const educationContent = document.getElementById("educationContent");
+  const marriageContent = document.getElementById("marriageContent");
+  const parentsContent = document.getElementById("parentsContent");
+  const healthContent = document.getElementById("healthContent");
+  const overallContent = document.getElementById("overallContent");
+  const reportDate = document.getElementById("reportDate");
+  const backBtn = document.getElementById("backBtn");
+
+  demoBtn.addEventListener("click", () => {
+    // Fill demo (29 Nov 1998, 21:31, Delhi)
+    document.getElementById("dob").value = "1998-11-29";
+    document.getElementById("tob").value = "21:31";
+    document.getElementById("pob").value = "Delhi";
+    document.getElementById("tz").value = "5.5";
+  });
+
+  backBtn.addEventListener("click", () => {
+    pageReport.style.display = "none";
+    pageInput.style.display = "block";
+    window.scrollTo({top:0, behavior:"smooth"});
+  });
+
+  birthForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    // Gather inputs
+    const dobVal = document.getElementById("dob").value;
+    const tobVal = document.getElementById("tob").value;
+    const pobVal = document.getElementById("pob").value;
+    const tzManual = document.getElementById("tz").value;
+
+    if(!dobVal || !tobVal || !pobVal){
+      alert("Please fill date, time and place of birth.");
+      return;
+    }
+
+    // parse date/time
+    const [y,m,d] = dobVal.split("-").map(Number);
+    const [hh,mm] = tobVal.split(":").map(Number);
+    // parse place
+    const place = parsePlace(pobVal);
+    let lat=0, lon=0, tzOffset=0, placeNote="";
+    if (place){
+      lat = place.lat; lon = place.lon; tzOffset = place.tz || 0;
+      placeNote = place.foundCity ? `Using city coordinates for ${place.city}` : "Using provided latitude/longitude (timezone estimated from longitude).";
+    } else {
+      // default: Greenwich
+      lat = 0; lon = 0; tzOffset = 0;
+      placeNote = "Place not recognized; using default coordinates (0,0).";
+    }
+    // override tz if manual selected
+    if (tzManual) tzOffset = parseFloat(tzManual);
+
+    // convert local time to UT decimal hours
+    const localDecimalHours = hh + mm/60;
+    const utDecimalHours = localDecimalHours - tzOffset;
+
+    // build birthDate object (local) for display; and birthDateUTC for calculations
+    const birthLocal = new Date(y, m-1, d, hh, mm, 0); // local
+    // compute JD using UTC hourDecimal
+    const JD = toJulianDate(y, m, d, utDecimalHours);
+
+    // compute Sun sign by DOB
+    function sunSignFromDate(day, month){
+      // month 1..12
+      const dd = month*100 + day;
+      const ranges = [
+        {sign:"Capricorn", start:1222, end:1231},
+        {sign:"Capricorn", start:101, end:119},
+        {sign:"Aquarius", start:120, end:218},
+        {sign:"Pisces", start:219, end:320},
+        {sign:"Aries", start:321, end:419},
+        {sign:"Taurus", start:420, end:520},
+        {sign:"Gemini", start:521, end:620},
+        {sign:"Cancer", start:621, end:722},
+        {sign:"Leo", start:723, end:822},
+        {sign:"Virgo", start:823, end:922},
+        {sign:"Libra", start:923, end:1022},
+        {sign:"Scorpio", start:1023, end:1121},
+        {sign:"Sagittarius", start:1122, end:1221}
+      ];
+      for (let r of ranges){
+        if (r.start <= r.end){
+          if (dd >= r.start && dd <= r.end) return r.sign;
+        } else {
+          if (dd >= r.start || dd <= r.end) return r.sign;
+        }
+      }
+      return "Unknown";
+    }
+
+    const sunSign = sunSignFromDate(d, m);
+
+    // Moon ecliptic longitude -> moonSign + nakshatra
+    const moonLon = moonEclipticLongitude(JD);
+    const moonSign = zodiac[Math.floor(moonLon/30)];
+    const nakWidth = 360 / 27;
+    const nakIndex = Math.floor(moonLon / nakWidth);
+    const nakName = nakshatras[nakIndex];
+    const posInNak = (moonLon - nakIndex * nakWidth) / nakWidth; // 0..1
+    const nakPada = Math.floor(posInNak * 4) + 1; // 1..4
+
+    // Ascendant (lagna)
+    const ascLon = calcAscendant(JD, lat, lon); // ecliptic longitude
+    const ascSign = zodiac[Math.floor(ascLon/30)];
+
+    // Career house (10th) from ascendant: index + 9 (0-based)
+    const ascIndex = zodiac.indexOf(ascSign);
+    const careerHouseSign = zodiac[(ascIndex + 9) % 12];
+
+    // Build mahadasha timeline
+    // birthDate for timeline: use birthLocal (since mahadasha timeline counts from birth moment local)
+    const timeline = buildMahadashaTimeline(birthLocal, nakIndex, posInNak);
+    const nowDate = new Date(); // uses client time; deterministic for user
+    // If you want to set to a fixed date (e.g., 2025-09-16) for testing, uncomment:
+    // const nowDate = new Date('2025-09-16T00:00:00Z');
+
+    const mahAnt = findCurrentMahadashaAndAntardasha(timeline, nowDate);
+    const currentMah = mahAnt.mah;
+    const currentAntar = mahAnt.antar;
+
+    // Simple Saturn transit check (approx)
+    const nowJD = toJulianDate(nowDate.getUTCFullYear(), nowDate.getUTCMonth()+1, nowDate.getUTCDate(), nowDate.getUTCHours() + nowDate.getUTCMinutes()/60);
+    const satLon = saturnLongitude(nowJD);
+    // House from moon
+    const diffMoon = norm360(satLon - moonLon);
+    const houseFromMoonIndex = Math.floor(diffMoon / 30); // 0..11 => house 1..12 as index+1
+    const houseFromMoon = houseFromMoonIndex + 1;
+    // House from asc
+    const diffAsc = norm360(satLon - ascLon);
+    const houseFromAscIndex = Math.floor(diffAsc / 30);
+    const houseFromAsc = houseFromAscIndex + 1;
+
+    const satTransit = {
+      satLon, houseFromMoon, houseFromAsc
+    };
+
+    // Compose a dataset to send to template
+    const data = {
+      dobStr: birthLocal.toLocaleDateString(),
+      tobStr: birthLocal.toLocaleTimeString(),
+      placeStr: pobVal,
+      sunSign,
+      moonSign,
+      ascSign,
+      nakshatra: nakName,
+      nak_index: nakIndex,
+      nak_pada: nakPada,
+      careerHouseSign,
+      mah: {lord: currentMah.lord, start: currentMah.start, end: currentMah.end},
+      antar: {lord: currentAntar.lord},
+      mahYears: (currentMah.end - currentMah.start)/(1000*3600*24*365.25),
+      nowDate,
+      satTransit,
+      timeline
+    };
+
+    // Attach timeline to data (for message generation)
+    data.timeline = timeline;
+
+    // Compose the narrative (long)
+    const composed = composeReport(data);
+
+    // Render overview boxes
+    overviewBoxes.innerHTML = composed.overviewBoxesHTML;
+
+    // Render full sections
+    careerContent.innerHTML = composed.careerHTML;
+    educationContent.innerHTML = composed.educationHTML;
+    marriageContent.innerHTML = composed.marriageHTML;
+    parentsContent.innerHTML = composed.parentsHTML;
+    healthContent.innerHTML = composed.healthHTML;
+    overallContent.innerHTML = composed.overallHTML;
+
+    // Report header date
+    reportDate.innerText = `Report — ${nowDate.toLocaleString()}`;
+
+    // Switch views
+    pageInput.style.display = "none";
+    pageReport.style.display = "block";
+    pageReport.scrollIntoView({behavior:"smooth"});
+  });
+
+  </script>
+</body>
+</html>
